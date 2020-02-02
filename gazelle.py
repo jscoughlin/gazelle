@@ -21,7 +21,7 @@ parser.add_argument('-d','--date',
 )
 parser.add_argument('-m','--method', 
 	help="either 'avalanche' or 'snowball', " 
-	"(default is avalanche)", required=False
+	"(default is avalanche)", type = str.lower, required=False
 )
 args = vars(parser.parse_args())
 
@@ -170,7 +170,7 @@ def show_results(method):
 
 	style.use('ggplot')
 
-	if(method == "Snowball"):
+	if(method == "snowball"):
 		ax = principal.plot(figsize=(8.0, 5.0),
 			title="Individual Principal vs. Time (Snowball)")
 	else:
@@ -182,7 +182,7 @@ def show_results(method):
 
 	plt.savefig('principal-vs-time.png')
 
-	if(method == "Snowball"):
+	if(method == "snowball"):
 		ax = interest.plot(figsize=(8.0, 5.0), 
 			title="Individual Interest vs. Time (Snowball)")
 	else:
@@ -202,7 +202,7 @@ def show_results(method):
 
 	ax = interest.plot(y='Sum')
 
-	if(method == "Snowball"):
+	if(method == "snowball"):
 		payments.plot(figsize=(8.0, 5.0),
 			y='Sum',title="Payments vs. Time (Snowball)", ax=ax)
 	else:
