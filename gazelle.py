@@ -12,6 +12,7 @@ args = vars(parser.parse_args())
 def load_debts(filename, method):
 	debts = pd.read_csv(filename, encoding = "ISO-8859-1")
 	debts["Adjusted Payment"] = 0
+	debts["Monthly Interest Accumulated"] = 0
 	if method == "snowball":
 		debts = debts.sort_values("Principal",ascending=True)
 	else:
@@ -59,7 +60,8 @@ def update_principal(date):
 			dailyrate = (debts.loc[index,"Rate"] / 100) / daysinyear
 			days = pd.Period("{}".format(date)).days_in_month
 			principal = (debts.loc[index,"Principal"])
-			debts.loc[index, "Principal"] = (principal * (1+dailyrate) ** days)	
+			debts.loc[index, "Principal"] = (principal * (1+dailyrate) ** days)
+			debts.loc[index,"Monthly Interest Accumulated"] = ((principal * (1+dailyrate) ** days)) - principal
 
 def make_payment(totalfunds):
 	remainder = totalfunds
@@ -94,6 +96,7 @@ def add_date_column(data):
 	
 def update_schedule(totalfunds, date):
 	output_payments=debts[["Name","Adjusted Payment"]].transpose()
+	output_interest=debts[["Name","Monthly Interest Accumulated"]].transpose()
 	output_principal=debts[["Name","Principal"]].transpose()
 
 	while(you_got_debt()):
@@ -105,6 +108,7 @@ def update_schedule(totalfunds, date):
 			make_payment(totalfunds)
 			output_payments = output_payments.append(debts[["Adjusted Payment"]].transpose())
 			output_principal = output_principal.append(debts[["Principal"]].transpose())
+			output_interest = output_interest.append(debts[["Monthly Interest Accumulated"]].transpose())
 		date = increment_date(date)
 		#print(debts.to_string(index=False, header=True)) # uncomment for a fun visual representation
 
@@ -113,6 +117,9 @@ def update_schedule(totalfunds, date):
 
 	data = add_date_column(output_principal)
 	data.to_csv("principal.csv", index = False, header=False, encoding = "ISO-8859-1")
+
+	data = add_date_column(output_interest)
+	data.to_csv("interest.csv", index = False, header=False, encoding = "ISO-8859-1")
 
 if __name__ == '__main__':
 
