@@ -125,7 +125,7 @@ def add_date_column(data):
 								periods=len(data), freq='MS')
 	data["Date"] = data["Date"].shift(1)
 	data = data[["Date"] + [c for c in data if c not in ["Date"]]]
-	#print(data.to_string(index=False, header=False))
+	
 	return data
 	
 
@@ -145,7 +145,6 @@ def update_schedule(totalfunds, date):
 			principal = principal.append(debts[["Principal"]].transpose())
 			interest = interest.append(debts[["Interest"]].transpose())
 		date = increment_date(date)
-		#print(debts.to_string(index=False, header=True)) # uncomment for a fun visual representation
 
 	data = add_date_column(payments)
 	data.to_csv("payment_schedule.csv", index = False, 
