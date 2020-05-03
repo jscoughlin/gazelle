@@ -1,9 +1,7 @@
 import datetime
 import os
 
-import matplotlib.pyplot as plt
 import pandas as pd
-from matplotlib import style
 
 
 def read_file(filename):
@@ -175,85 +173,6 @@ def update_schedule(totalfunds, date):
     data.to_csv("interest.csv", index=False, header=False, encoding="utf-8")
 
 
-def show_results():
-    """Use Matplotlib to get some basic graphs."""
-
-    inputs = pd.read_csv("input.csv", encoding="utf-8", nrows=1)
-    strategy = inputs.loc[0, "Strategy (Avalanche or Snowball)"].lower()
-
-    principal = pd.read_csv(
-        "principal.csv", parse_dates=[0], index_col=0, encoding="utf-8"
-    )
-    interest = pd.read_csv(
-        "interest.csv", parse_dates=[0], index_col=0, encoding="utf-8"
-    )
-    payments = pd.read_csv(
-        "payment_schedule.csv", parse_dates=[0], index_col=0, encoding="utf-8"
-    )
-
-    style.use("ggplot")
-
-    if strategy == "snowball":
-        ax = principal.plot(
-            figsize=(8.0, 5.0), title="Individual Principal vs. Time (Snowball)"
-        )
-    else:
-        ax = principal.plot(
-            figsize=(8.0, 5.0), title="Individual Principal vs. Time (Avalanche)"
-        )
-    ax.set_xlabel("Time (Years)")
-    ax.set_ylabel("Principal")
-    ax.get_legend().remove()
-
-    plt.savefig("principal-vs-time.png")
-
-    if strategy == "snowball":
-        ax = interest.plot(
-            figsize=(8.0, 5.0), title="Individual Interest vs. Time (Snowball)"
-        )
-    else:
-        ax = interest.plot(
-            figsize=(8.0, 5.0), title="Individual Interest vs. Time (Avalanche)"
-        )
-    ax.set_xlabel("Time (Years)")
-    ax.set_ylabel("Interest")
-    ax.get_legend().remove()
-
-    plt.savefig("interest-vs-time.png")
-
-    for index, row in payments.iterrows():
-        interest.loc[index, "Sum"] = interest.loc[index].sum(axis=0)
-        payments.loc[index, "Sum"] = (
-            payments.loc[index].sum(axis=0) - interest.loc[index, "Sum"]
-        )
-    start = interest.index[0]
-    end = index
-
-    ax = interest.plot(y="Sum")
-
-    if strategy == "snowball":
-        payments.plot(
-            figsize=(8.0, 5.0), y="Sum", title="Payments vs. Time (Snowball)", ax=ax
-        )
-    else:
-        payments.plot(
-            figsize=(8.0, 5.0), y="Sum", title="Payments vs. Time (Avalanche)", ax=ax
-        )
-    ax.legend(["Interest", "Principal"])
-    ax.set_xlabel("Time (Years)")
-    ax.set_ylabel("Payment")
-
-    plt.savefig("payments-vs-time.png")
-
-    print("Total Time: {}".format(end - start))
-    print("Total Interest Payments: {}".format(interest["Sum"].sum()))
-    print("Total Principal Payments: {}".format(payments["Sum"].sum()))
-    print("Total Payments: {}".format(interest["Sum"].sum() + payments["Sum"].sum()))
-
-    os.remove("principal.csv")
-    os.remove("interest.csv")
-
-
 if __name__ == "__main__":
 
     filename = "input.csv"
@@ -263,4 +182,3 @@ if __name__ == "__main__":
 
     debts = read_file(filename)
     update_schedule(totalfunds, date)
-    show_results()
