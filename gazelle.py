@@ -27,6 +27,8 @@ args = vars(parser.parse_args())
 
 
 def load_debts(filename, method):
+	"""Load in the different debts from a csv."""
+
 	debts = pd.read_csv(filename, encoding = "ISO-8859-1")
 	debts["Adjusted Payment"] = 0
 	debts["Interest"] = 0
@@ -50,6 +52,8 @@ def insufficient_funds(totalfunds):
 
 
 def pay_minimums(index):
+	"""Make the minimum payments first."""
+
 	principal = (debts.loc[index,"Principal"])
 	payment = (debts.loc[index,"Payment"])
 	
@@ -61,6 +65,8 @@ def pay_minimums(index):
 
 
 def pay_excess(index, remainder):
+	"""Pay any excess remaining after making minimum payments."""
+
 	principal = (debts.loc[index,"Principal"])
 	payment = remainder
 	
@@ -77,8 +83,8 @@ def pay_excess(index, remainder):
 
 
 def update_principal(date):
-	# Calculate the updated principal and interest paid
-	# using daily interest compounding.
+	"""Calculate the principal and interest using daily compounding."""
+
 	for index, row in debts.iterrows():
 		if(debt_exists(index)):
 			daysinyear = 366 if (pd.Period("{}".format(date)).is_leap_year) else 365
@@ -90,9 +96,13 @@ def update_principal(date):
 
 
 def make_payment(totalfunds):
-	# First pay the minimum balances required,
-	# then apply any extra to either the highest interest (avalanche),
-	# or the lowest principal (snowball).
+	""" Apply a payment to the loan(s)
+
+	First pay the minimum balances required,
+	then apply any extra to either the highest interest (avalanche),
+	or the lowest principal (snowball).
+	"""
+
 	remainder = totalfunds
 
 	for index, row in debts.iterrows():
@@ -113,14 +123,20 @@ def make_payment(totalfunds):
 
 
 def increment_date(date):
+	"""Increment the date to the next month."""
+
 	date = date + pd.DateOffset(months=1)
 	date = date.date()
 	return date
 
 
 def add_date_column(data):
-	# Skip the first row (the one with all of the debt names)
-	# and make the first column the date column.
+	"""Adds a date column to the DataFrame
+	
+	Skip the first row (the one with all of the debt names)
+	and make the first column the date column.
+	"""
+
 	data["Date"] = pd.date_range(start=(args['date']), 
 								periods=len(data), freq='MS')
 	data["Date"] = data["Date"].shift(1)
@@ -130,6 +146,8 @@ def add_date_column(data):
 	
 
 def update_schedule(totalfunds, date):
+	"""Update the payment schedule after payments were made."""
+
 	payments=debts[["Name","Adjusted Payment"]].transpose()
 	interest=debts[["Name","Interest"]].transpose()
 	principal=debts[["Name","Principal"]].transpose()
@@ -160,6 +178,8 @@ def update_schedule(totalfunds, date):
 
 
 def show_results(method):
+	"""Use Matplotlib to get some basic graphs."""
+
 	principal = pd.read_csv("principal.csv", parse_dates=[0], 
 							index_col=0, encoding = "ISO-8859-1")
 	interest = pd.read_csv("interest.csv", parse_dates=[0], 
