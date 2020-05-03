@@ -1,4 +1,3 @@
-import argparse
 import datetime
 import os
 
@@ -6,39 +5,16 @@ import matplotlib.pyplot as plt
 import pandas as pd
 from matplotlib import style
 
-parser = argparse.ArgumentParser(description="a debt payoff calculator")
-parser.add_argument(
-    "-a",
-    "--amount",
-    help="monthly amount that can be put towards debt",
-    type=int,
-    required=True,
-)
-parser.add_argument(
-    "-d",
-    "--date",
-    help="start date in yyyymm, " "(default is the current month and year)",
-    default=datetime.date.today(),
-    type=lambda s: datetime.datetime.strptime(s, "%Y%m").date(),
-    required=False,
-)
-parser.add_argument(
-    "-m",
-    "--method",
-    help="either 'avalanche' or 'snowball', " "(default is avalanche)",
-    type=str.lower,
-    required=False,
-)
-args = vars(parser.parse_args())
 
-
-def load_debts(filename, method):
+def read_file(filename):
     """Load in the different debts from a csv."""
 
-    debts = pd.read_csv(filename, encoding="ISO-8859-1")
+    inputs = pd.read_csv("input.csv", encoding="utf-8", nrows=1)
+    debts = pd.read_csv("input.csv", encoding="utf-8", skiprows=4)
+
     debts["Adjusted Payment"] = 0
     debts["Interest"] = 0
-    if method == "snowball":
+    if inputs.loc[0, "Strategy (Avalanche or Snowball)"].lower() == "snowball":
         debts = debts.sort_values("Principal", ascending=True)
     else:
         debts = debts.sort_values("Rate", ascending=False)
@@ -132,6 +108,20 @@ def make_payment(totalfunds):
             debts.loc[index, "Adjusted Payment"] = 0
 
 
+def get_monthly_payment():
+    inputs = pd.read_csv("input.csv", encoding="utf-8", nrows=1)
+    return inputs.loc[0, "Monthly Payment"]
+
+
+def get_initial_date():
+    inputs = pd.read_csv("input.csv", encoding="utf-8", nrows=1)
+    date = inputs.loc[0, "Balance Date (yyyymm)"]
+    if pd.isnull(date):
+        return datetime.date.today()
+    else:
+        return datetime.datetime.strptime(str(date), "%Y%m")
+
+
 def increment_date(date):
     """Increment the date to the next month."""
 
@@ -147,7 +137,9 @@ def add_date_column(data):
 	and make the first column the date column.
 	"""
 
-    data["Date"] = pd.date_range(start=(args["date"]), periods=len(data), freq="MS")
+    data["Date"] = pd.date_range(
+        start=(get_initial_date()), periods=len(data), freq="MS"
+    )
     data["Date"] = data["Date"].shift(1)
     data = data[["Date"] + [c for c in data if c not in ["Date"]]]
 
@@ -174,33 +166,34 @@ def update_schedule(totalfunds, date):
         date = increment_date(date)
 
     data = add_date_column(payments)
-    data.to_csv(
-        "payment_schedule.csv", index=False, header=False, encoding="ISO-8859-1"
-    )
+    data.to_csv("payment_schedule.csv", index=False, header=False, encoding="utf-8")
 
     data = add_date_column(principal)
-    data.to_csv("principal.csv", index=False, header=False, encoding="ISO-8859-1")
+    data.to_csv("principal.csv", index=False, header=False, encoding="utf-8")
 
     data = add_date_column(interest)
-    data.to_csv("interest.csv", index=False, header=False, encoding="ISO-8859-1")
+    data.to_csv("interest.csv", index=False, header=False, encoding="utf-8")
 
 
-def show_results(method):
+def show_results():
     """Use Matplotlib to get some basic graphs."""
 
+    inputs = pd.read_csv("input.csv", encoding="utf-8", nrows=1)
+    strategy = inputs.loc[0, "Strategy (Avalanche or Snowball)"].lower()
+
     principal = pd.read_csv(
-        "principal.csv", parse_dates=[0], index_col=0, encoding="ISO-8859-1"
+        "principal.csv", parse_dates=[0], index_col=0, encoding="utf-8"
     )
     interest = pd.read_csv(
-        "interest.csv", parse_dates=[0], index_col=0, encoding="ISO-8859-1"
+        "interest.csv", parse_dates=[0], index_col=0, encoding="utf-8"
     )
     payments = pd.read_csv(
-        "payment_schedule.csv", parse_dates=[0], index_col=0, encoding="ISO-8859-1"
+        "payment_schedule.csv", parse_dates=[0], index_col=0, encoding="utf-8"
     )
 
     style.use("ggplot")
 
-    if method == "snowball":
+    if strategy == "snowball":
         ax = principal.plot(
             figsize=(8.0, 5.0), title="Individual Principal vs. Time (Snowball)"
         )
@@ -214,7 +207,7 @@ def show_results(method):
 
     plt.savefig("principal-vs-time.png")
 
-    if method == "snowball":
+    if strategy == "snowball":
         ax = interest.plot(
             figsize=(8.0, 5.0), title="Individual Interest vs. Time (Snowball)"
         )
@@ -238,7 +231,7 @@ def show_results(method):
 
     ax = interest.plot(y="Sum")
 
-    if method == "snowball":
+    if strategy == "snowball":
         payments.plot(
             figsize=(8.0, 5.0), y="Sum", title="Payments vs. Time (Snowball)", ax=ax
         )
@@ -264,11 +257,10 @@ def show_results(method):
 if __name__ == "__main__":
 
     filename = "input.csv"
-    method = args["method"]
-    totalfunds = args["amount"]
-    date = args["date"]
+    totalfunds = get_monthly_payment()
+    date = get_initial_date()
     timetable = pd.DataFrame(columns=["Date"])
 
-    debts = load_debts(filename, method)
+    debts = read_file(filename)
     update_schedule(totalfunds, date)
-    show_results(method)
+    show_results()
