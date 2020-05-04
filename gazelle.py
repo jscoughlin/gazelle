@@ -9,6 +9,7 @@ def read_file(filename):
 
     inputs = pd.read_csv("input.csv", encoding="utf-8", nrows=1)
     debts = pd.read_csv("input.csv", encoding="utf-8", skiprows=4)
+    debts.set_index("Name", inplace=True)
 
     debts["Adjusted Payment"] = 0
     debts["Interest"] = 0
@@ -31,23 +32,23 @@ def insufficient_funds(totalfunds):
     return 1 if (debts["Payment"].sum()) > totalfunds else 0
 
 
-def pay_minimums(index):
+def pay_minimums(loan):
     """Make the minimum payments first."""
 
-    principal = debts.loc[index, "Principal"]
-    payment = debts.loc[index, "Payment"]
+    principal = debts.loc[loan, "Principal"]
+    payment = debts.loc[loan, "Payment"]
 
     if principal - payment < 0:
         payment = principal
 
-    debts.loc[index, "Adjusted Payment"] = payment
-    debts.loc[index, "Principal"] = debts.loc[index, "Principal"] - payment
+    debts.loc[loan, "Adjusted Payment"] = payment
+    debts.loc[loan, "Principal"] = debts.loc[loan, "Principal"] - payment
 
 
-def pay_excess(index, remainder):
+def pay_excess(loan, remainder):
     """Pay any excess remaining after making minimum payments."""
 
-    principal = debts.loc[index, "Principal"]
+    principal = debts.loc[loan, "Principal"]
     payment = remainder
 
     if principal - payment < 0:
@@ -56,10 +57,8 @@ def pay_excess(index, remainder):
     else:
         remainder = 0
 
-    debts.loc[index, "Adjusted Payment"] = (
-        debts.loc[index, "Adjusted Payment"] + payment
-    )
-    debts.loc[index, "Principal"] = debts.loc[index, "Principal"] - payment
+    debts.loc[loan, "Adjusted Payment"] = debts.loc[loan, "Adjusted Payment"] + payment
+    debts.loc[loan, "Principal"] = debts.loc[loan, "Principal"] - payment
 
     return remainder
 
@@ -87,23 +86,24 @@ def make_payment(totalfunds):
 	or the lowest principal (snowball).
 	"""
 
+    principal = debts[["Principal"]].transpose()
     remainder = totalfunds
 
-    for index, row in debts.iterrows():
-        if debt_exists(index):
-            remainder = remainder - debts.loc[index, "Payment"]
+    for loan in principal.columns:
+        if principal.iloc[-1].loc[loan] > 0:
+            remainder = remainder - debts.loc[loan, "Payment"]
 
-    for index, row in debts.iterrows():
-        if debt_exists(index):
-            pay_minimums(index)
+    for loan in principal.columns:
+        if principal.iloc[-1].loc[loan] > 0:
+            pay_minimums(loan)
         else:
-            debts.loc[index, "Adjusted Payment"] = 0
+            debts.loc[loan, "Adjusted Payment"] = 0
 
-    for index, row in debts.iterrows():
-        if debt_exists(index):
-            remainder = pay_excess(index, remainder)
+    for loan in principal.columns:
+        if principal.iloc[-1].loc[loan] > 0:
+            remainder = pay_excess(loan, remainder)
         else:
-            debts.loc[index, "Adjusted Payment"] = 0
+            debts.loc[loan, "Adjusted Payment"] = 0
 
 
 def get_monthly_payment():
@@ -147,9 +147,10 @@ def add_date_column(data):
 def update_schedule(totalfunds, date):
     """Update the payment schedule after payments were made."""
 
-    payments = debts[["Name", "Adjusted Payment"]].transpose()
-    interest = debts[["Name", "Interest"]].transpose()
-    principal = debts[["Name", "Principal"]].transpose()
+    payments = debts[["Adjusted Payment"]].transpose()
+    interest = debts[["Interest"]].transpose()
+    principal = debts[["Principal"]].transpose()
+    principal.columns = [loan for loan in principal.columns]
 
     while you_got_debt():
         if insufficient_funds(totalfunds):
@@ -164,13 +165,13 @@ def update_schedule(totalfunds, date):
         date = increment_date(date)
 
     data = add_date_column(payments)
-    data.to_csv("payment_schedule.csv", index=False, header=False, encoding="utf-8")
+    data.to_csv("payment_schedule.csv", index=False, header=True, encoding="utf-8")
 
     data = add_date_column(principal)
-    data.to_csv("principal.csv", index=False, header=False, encoding="utf-8")
+    data.to_csv("principal.csv", index=False, header=True, encoding="utf-8")
 
     data = add_date_column(interest)
-    data.to_csv("interest.csv", index=False, header=False, encoding="utf-8")
+    data.to_csv("interest.csv", index=False, header=True, encoding="utf-8")
 
 
 if __name__ == "__main__":
