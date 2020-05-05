@@ -20,16 +20,8 @@ def read_file(filename):
     return debts
 
 
-def you_got_debt():
-    return 0 if debts["Principal"].sum() == 0 else 1
-
-
 def debt_exists(index):
     return 0 if debts.loc[index, "Principal"] == 0 else 1
-
-
-def insufficient_funds(totalfunds):
-    return 1 if (debts["Payment"].sum()) > totalfunds else 0
 
 
 def pay_minimums(principal, payment):
@@ -114,8 +106,8 @@ def update_schedule(totalfunds, date):
     principal = debts[["Principal"]].transpose()
     principal.columns = [loan for loan in principal.columns]
 
-    while you_got_debt():
-        if insufficient_funds(totalfunds):
+    while debts["Principal"].sum() > 0:
+        if debts["Payment"].sum() > totalfunds:
             print("not enough for minimum monthly payments")
             break
         else:
