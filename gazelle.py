@@ -32,35 +32,25 @@ def insufficient_funds(totalfunds):
     return 1 if (debts["Payment"].sum()) > totalfunds else 0
 
 
-def pay_minimums(loan):
+def pay_minimums(principal, payment):
     """Make the minimum payments first."""
 
-    principal = debts.loc[loan, "Principal"]
-    payment = debts.loc[loan, "Payment"]
-
-    if principal - payment < 0:
+    if principal - payment <= 0:
         payment = principal
-
-    debts.loc[loan, "Adjusted Payment"] = payment
-    debts.loc[loan, "Principal"] = debts.loc[loan, "Principal"] - payment
+    return principal - payment, payment
 
 
-def pay_excess(loan, remainder):
+def pay_excess(principal, pay, remainder):
     """Pay any excess remaining after making minimum payments."""
 
-    principal = debts.loc[loan, "Principal"]
     payment = remainder
 
-    if principal - payment < 0:
+    if principal - payment <= 0:
         payment = principal
         remainder = remainder - principal
     else:
         remainder = 0
-
-    debts.loc[loan, "Adjusted Payment"] = debts.loc[loan, "Adjusted Payment"] + payment
-    debts.loc[loan, "Principal"] = debts.loc[loan, "Principal"] - payment
-
-    return remainder
+    return principal - payment, pay + payment, remainder
 
 
 def update_principal(date):
@@ -76,34 +66,6 @@ def update_principal(date):
             debts.loc[index, "Interest"] = (
                 (principal * (1 + dailyrate) ** days)
             ) - principal
-
-
-def make_payment(totalfunds):
-    """ Apply a payment to the loan(s)
-
-	First pay the minimum balances required,
-	then apply any extra to either the highest interest (avalanche),
-	or the lowest principal (snowball).
-	"""
-
-    principal = debts[["Principal"]].transpose()
-    remainder = totalfunds
-
-    for loan in principal.columns:
-        if principal.iloc[-1].loc[loan] > 0:
-            remainder = remainder - debts.loc[loan, "Payment"]
-
-    for loan in principal.columns:
-        if principal.iloc[-1].loc[loan] > 0:
-            pay_minimums(loan)
-        else:
-            debts.loc[loan, "Adjusted Payment"] = 0
-
-    for loan in principal.columns:
-        if principal.iloc[-1].loc[loan] > 0:
-            remainder = pay_excess(loan, remainder)
-        else:
-            debts.loc[loan, "Adjusted Payment"] = 0
 
 
 def get_monthly_payment():
@@ -158,7 +120,39 @@ def update_schedule(totalfunds, date):
             break
         else:
             update_principal(date)
-            make_payment(totalfunds)
+
+            # set necessary payments to zero
+            debts["Payment"] = debts.apply(
+                lambda x: 0 if x["Principal"] <= 0 else x["Payment"], axis=1
+            )
+            debts["Adjusted Payment"] = debts.apply(
+                lambda x: 0 if x["Principal"] <= 0 else x["Payment"], axis=1
+            )
+
+            # pay mins
+            debts["Principal"], debts["Adjusted Payment"] = zip(
+                *debts.apply(
+                    lambda x: pay_minimums(x["Principal"], x["Payment"]), axis=1
+                )
+            )
+
+            # calculate remainder
+            remainder = totalfunds - debts["Payment"].sum()
+
+            # pay excess and update the adjusted payment amount
+            for loan in debts.index:
+                if debts.loc[loan, "Principal"] > 0:
+                    (
+                        debts.loc[loan, "Principal"],
+                        debts.loc[loan, "Adjusted Payment"],
+                        remainder,
+                    ) = pay_excess(
+                        debts.loc[loan, "Principal"],
+                        debts.loc[loan, "Payment"],
+                        remainder,
+                    )
+
+            # append
             payments = payments.append(debts[["Adjusted Payment"]].transpose())
             principal = principal.append(debts[["Principal"]].transpose())
             interest = interest.append(debts[["Interest"]].transpose())
