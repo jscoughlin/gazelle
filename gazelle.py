@@ -137,15 +137,13 @@ def update_schedule(totalfunds, date):
     )
     payments.to_csv("payment_schedule.csv", index=True, header=True, encoding="utf-8")
 
-    principal.index = pd.date_range(
-        start=(get_initial_date()), periods=len(principal), freq="MS", name="Date"
-    )
-    principal.to_csv("principal.csv", index=False, header=True, encoding="utf-8")
-
-    interest.index = pd.date_range(
-        start=(get_initial_date()), periods=len(interest), freq="MS", name="Date"
-    )
-    interest.to_csv("interest.csv", index=False, header=True, encoding="utf-8")
+    print()
+    print(f"Total Time: {payments.index[-1]-payments.index[0]}")
+    print(f"Total Payments: {payments.values.sum()}")
+    print(f"Total Principal Payments: {payments.values.sum()-interest.values.sum()}")
+    print(f"Total Interest Payments: {interest.values.sum()}")
+    print()
+    print("payment_schedule.csv generated!")
 
 
 if __name__ == "__main__":
