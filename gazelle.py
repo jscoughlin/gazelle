@@ -77,25 +77,7 @@ def get_initial_date():
 def increment_date(date):
     """Increment the date to the next month."""
 
-    date = date + pd.DateOffset(months=1)
-    date = date.date()
-    return date
-
-
-def add_date_column(data):
-    """Adds a date column to the DataFrame
-	
-	Skip the first row (the one with all of the debt names)
-	and make the first column the date column.
-	"""
-
-    data["Date"] = pd.date_range(
-        start=(get_initial_date()), periods=len(data), freq="MS"
-    )
-    data["Date"] = data["Date"].shift(1)
-    data = data[["Date"] + [c for c in data if c not in ["Date"]]]
-
-    return data
+    return date + pd.DateOffset(months=1)
 
 
 def update_schedule(totalfunds, date):
@@ -150,14 +132,20 @@ def update_schedule(totalfunds, date):
             interest = interest.append(debts[["Interest"]].transpose())
         date = increment_date(date)
 
-    data = add_date_column(payments)
-    data.to_csv("payment_schedule.csv", index=False, header=True, encoding="utf-8")
+    payments.index = pd.date_range(
+        start=(get_initial_date()), periods=len(payments), freq="MS", name="Date"
+    )
+    payments.to_csv("payment_schedule.csv", index=True, header=True, encoding="utf-8")
 
-    data = add_date_column(principal)
-    data.to_csv("principal.csv", index=False, header=True, encoding="utf-8")
+    principal.index = pd.date_range(
+        start=(get_initial_date()), periods=len(principal), freq="MS", name="Date"
+    )
+    principal.to_csv("principal.csv", index=False, header=True, encoding="utf-8")
 
-    data = add_date_column(interest)
-    data.to_csv("interest.csv", index=False, header=True, encoding="utf-8")
+    interest.index = pd.date_range(
+        start=(get_initial_date()), periods=len(interest), freq="MS", name="Date"
+    )
+    interest.to_csv("interest.csv", index=False, header=True, encoding="utf-8")
 
 
 if __name__ == "__main__":
