@@ -125,10 +125,11 @@ def update_schedule(totalfunds, date):
     payments.to_csv("payment_schedule.csv", index=True, header=True, encoding="utf-8")
 
     print()
-    print(f"Total Time: {payments.index[-1]-payments.index[0]}")
-    print(f"Total Payments: {payments.values.sum()}")
-    print(f"Total Principal Payments: {payments.values.sum()-interest.values.sum()}")
-    print(f"Total Interest Payments: {interest.values.sum()}")
+    print(f"Debt Free: {payments.index[-1].strftime('%B %Y')}")
+    print()
+    print(f"Total Payments: {payments.values.sum():,.2f}")
+    print(f"Total Principal: {payments.values.sum()-interest.values.sum():,.2f}")
+    print(f"Total Interest: {interest.values.sum():,.2f}")
     print()
     print("payment_schedule.csv generated!")
 
