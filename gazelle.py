@@ -32,17 +32,17 @@ def pay_minimums(principal, payment):
     return principal - payment, payment
 
 
-def pay_excess(principal, pay, remainder):
+def pay_excess(principal, minimum, remainder):
     """Pay any excess remaining after making minimum payments."""
 
-    payment = remainder
+    excess = remainder
 
-    if principal - payment <= 0:
-        payment = principal
+    if principal - excess <= 0:
+        excess = principal
         remainder = remainder - principal
     else:
         remainder = 0
-    return principal - payment, pay + payment, remainder
+    return principal - excess, minimum + excess, remainder
 
 
 def update_principal(date):
@@ -85,33 +85,28 @@ def update_schedule(totalfunds, date):
 
     payments = debts[["Adjusted Payment"]].transpose()
     interest = debts[["Interest"]].transpose()
-    principal = debts[["Principal"]].transpose()
-    principal.columns = [loan for loan in principal.columns]
 
     while debts["Principal"].sum() > 0:
-        if debts["Payment"].sum() > totalfunds:
+        if debts["Minimum Payment"].sum() > totalfunds:
             print("not enough for minimum monthly payments")
             break
         else:
             update_principal(date)
 
-            # set necessary payments to zero
-            debts["Payment"] = debts.apply(
-                lambda x: 0 if x["Principal"] <= 0 else x["Payment"], axis=1
-            )
-            debts["Adjusted Payment"] = debts.apply(
-                lambda x: 0 if x["Principal"] <= 0 else x["Payment"], axis=1
+            # If principal balance is zero, set it's payment to zero.
+            debts["Minimum Payment"] = debts.apply(
+                lambda x: 0 if x["Principal"] <= 0 else x["Minimum Payment"], axis=1
             )
 
             # pay mins
             debts["Principal"], debts["Adjusted Payment"] = zip(
                 *debts.apply(
-                    lambda x: pay_minimums(x["Principal"], x["Payment"]), axis=1
+                    lambda x: pay_minimums(x["Principal"], x["Minimum Payment"]), axis=1
                 )
             )
 
             # calculate remainder
-            remainder = totalfunds - debts["Payment"].sum()
+            remainder = totalfunds - debts["Minimum Payment"].sum()
 
             # pay excess and update the adjusted payment amount
             for loan in debts.index:
@@ -122,19 +117,21 @@ def update_schedule(totalfunds, date):
                         remainder,
                     ) = pay_excess(
                         debts.loc[loan, "Principal"],
-                        debts.loc[loan, "Payment"],
+                        debts.loc[loan, "Minimum Payment"],
                         remainder,
                     )
 
-            # append
             payments = payments.append(debts[["Adjusted Payment"]].transpose())
-            principal = principal.append(debts[["Principal"]].transpose())
             interest = interest.append(debts[["Interest"]].transpose())
         date = increment_date(date)
 
     payments.index = pd.date_range(
-        start=(get_initial_date()), periods=len(payments), freq="MS", name="Date"
+        start=(get_initial_date()), periods=len(payments), freq="M", name="Date"
     )
+
+    # The initial payment row is set to zero.
+    # Shift up one and drop the last row before writing to csv.
+    payments = payments.shift(-1).drop(payments.tail(1).index)
     payments.to_csv("payment_schedule.csv", index=True, header=True, encoding="utf-8")
 
     print()
