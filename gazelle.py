@@ -1,5 +1,4 @@
 import datetime
-import os
 
 import pandas as pd
 
@@ -65,15 +64,6 @@ def get_monthly_payment():
     return inputs.loc[0, "Monthly Payment"]
 
 
-def get_initial_date():
-    inputs = pd.read_csv("input.csv", encoding="utf-8", nrows=1)
-    date = inputs.loc[0, "Balance Date (yyyymm)"]
-    if pd.isnull(date):
-        return datetime.date.today()
-    else:
-        return datetime.datetime.strptime(str(date), "%Y%m")
-
-
 def increment_date(date):
     """Increment the date to the next month."""
 
@@ -126,7 +116,7 @@ def update_schedule(totalfunds, date):
         date = increment_date(date)
 
     payments.index = pd.date_range(
-        start=(get_initial_date()), periods=len(payments), freq="M", name="Date"
+        start=(datetime.date.today()), periods=len(payments), freq="M", name="Date"
     )
 
     # The initial payment row is set to zero.
@@ -147,7 +137,7 @@ if __name__ == "__main__":
 
     filename = "input.csv"
     totalfunds = get_monthly_payment()
-    date = get_initial_date()
+    date = datetime.date.today()
     timetable = pd.DataFrame(columns=["Date"])
 
     debts = read_file(filename)
