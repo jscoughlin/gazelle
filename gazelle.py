@@ -56,12 +56,6 @@ def pay_excess(principal, minimum, remainder):
     return principal - excess, minimum + excess, remainder
 
 
-def increment_date(date):
-    """Increment the date to the next month."""
-
-    return date + pd.DateOffset(months=1)
-
-
 def main():
 
     filename = "input.csv"
@@ -90,17 +84,16 @@ def main():
                 lambda x: 0 if x["Principal"] <= 0 else x["Minimum Payment"], axis=1
             )
 
-            # pay mins
+            # Make minimum payments
             debts["Principal"], debts["Adjusted Payment"] = zip(
                 *debts.apply(
                     lambda x: pay_minimums(x["Principal"], x["Minimum Payment"]), axis=1
                 )
             )
 
-            # calculate remainder
             remainder = totalfunds - debts["Minimum Payment"].sum()
 
-            # pay excess and update the adjusted payment amount
+            # Make excess payments and update the adjusted payment amount
             for debt in debts.index:
                 if debts.loc[debt, "Principal"] > 0:
                     (
@@ -116,7 +109,7 @@ def main():
             payments = payments.append(debts[["Adjusted Payment"]].transpose())
             interest = interest.append(debts[["Interest"]].transpose())
 
-        date = increment_date(date)
+        date = date + pd.DateOffset(months=1)
 
     payments.index = pd.date_range(
         start=(datetime.date.today()), periods=len(payments), freq="M", name="Date"
