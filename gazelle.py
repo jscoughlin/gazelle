@@ -22,8 +22,17 @@ def read_file(filename):
     return debts, totalfunds
 
 
-def debt_exists(index):
-    return 0 if debts.loc[index, "Principal"] == 0 else 1
+def compound_daily(date, principal, rate):
+    """Calculate the principal and interest using daily compounding."""
+
+    daysinyear = 366 if (pd.Period("{}".format(date)).is_leap_year) else 365
+    dailyrate = (rate / 100) / daysinyear
+    days = pd.Period("{}".format(date)).days_in_month
+
+    new_principal = principal * (1 + dailyrate) ** days
+    interest = new_principal - principal
+
+    return new_principal, interest
 
 
 def pay_minimums(principal, payment):
@@ -47,39 +56,34 @@ def pay_excess(principal, minimum, remainder):
     return principal - excess, minimum + excess, remainder
 
 
-def update_principal(date):
-    """Calculate the principal and interest using daily compounding."""
-
-    for index, row in debts.iterrows():
-        if debt_exists(index):
-            daysinyear = 366 if (pd.Period("{}".format(date)).is_leap_year) else 365
-            dailyrate = (debts.loc[index, "Rate"] / 100) / daysinyear
-            days = pd.Period("{}".format(date)).days_in_month
-            principal = debts.loc[index, "Principal"]
-            debts.loc[index, "Principal"] = principal * (1 + dailyrate) ** days
-            debts.loc[index, "Interest"] = (
-                (principal * (1 + dailyrate) ** days)
-            ) - principal
-
-
 def increment_date(date):
     """Increment the date to the next month."""
 
     return date + pd.DateOffset(months=1)
 
 
-def update_schedule(totalfunds, date):
-    """Update the payment schedule after payments were made."""
+def main():
+
+    filename = "input.csv"
+    debts, totalfunds = read_file(filename)
 
     payments = debts[["Adjusted Payment"]].transpose()
     interest = debts[["Interest"]].transpose()
+
+    date = datetime.date.today()
 
     while debts["Principal"].sum() > 0:
         if debts["Minimum Payment"].sum() > totalfunds:
             print("not enough for minimum monthly payments")
             break
         else:
-            update_principal(date)
+
+            # Update the principal and paid interest using daily compounding
+            debts["Principal"], debts["Interest"] = zip(
+                *debts.apply(
+                    lambda x: compound_daily(date, x["Principal"], x["Rate"]), axis=1,
+                )
+            )
 
             # If principal balance is zero, set it's payment to zero.
             debts["Minimum Payment"] = debts.apply(
@@ -97,20 +101,21 @@ def update_schedule(totalfunds, date):
             remainder = totalfunds - debts["Minimum Payment"].sum()
 
             # pay excess and update the adjusted payment amount
-            for loan in debts.index:
-                if debts.loc[loan, "Principal"] > 0:
+            for debt in debts.index:
+                if debts.loc[debt, "Principal"] > 0:
                     (
-                        debts.loc[loan, "Principal"],
-                        debts.loc[loan, "Adjusted Payment"],
+                        debts.loc[debt, "Principal"],
+                        debts.loc[debt, "Adjusted Payment"],
                         remainder,
                     ) = pay_excess(
-                        debts.loc[loan, "Principal"],
-                        debts.loc[loan, "Minimum Payment"],
+                        debts.loc[debt, "Principal"],
+                        debts.loc[debt, "Minimum Payment"],
                         remainder,
                     )
 
             payments = payments.append(debts[["Adjusted Payment"]].transpose())
             interest = interest.append(debts[["Interest"]].transpose())
+
         date = increment_date(date)
 
     payments.index = pd.date_range(
@@ -133,9 +138,4 @@ def update_schedule(totalfunds, date):
 
 
 if __name__ == "__main__":
-
-    filename = "input.csv"
-    date = datetime.date.today()
-
-    debts, totalfunds = read_file(filename)
-    update_schedule(totalfunds, date)
+    main()
