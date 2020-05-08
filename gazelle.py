@@ -6,17 +6,20 @@ import pandas as pd
 def read_file(filename):
     """Load in the different debts from a csv."""
 
-    inputs = pd.read_csv("input.csv", encoding="utf-8", nrows=1)
-    debts = pd.read_csv("input.csv", encoding="utf-8", skiprows=4)
-    debts.set_index("Name", inplace=True)
-
+    debts = pd.read_csv(filename, encoding="utf-8", skiprows=4, index_col="Name")
     debts["Adjusted Payment"] = 0
     debts["Interest"] = 0
-    if inputs.loc[0, "Strategy (Avalanche or Snowball)"].lower() == "snowball":
+
+    inputs = pd.read_csv(filename, encoding="utf-8", nrows=1)
+    totalfunds = inputs.loc[0, "Monthly Payment"]
+    strategy = inputs.loc[0, "Strategy (Avalanche or Snowball)"].lower()
+
+    if strategy == "snowball":
         debts = debts.sort_values("Principal", ascending=True)
     else:
         debts = debts.sort_values("Rate", ascending=False)
-    return debts
+
+    return debts, totalfunds
 
 
 def debt_exists(index):
@@ -57,11 +60,6 @@ def update_principal(date):
             debts.loc[index, "Interest"] = (
                 (principal * (1 + dailyrate) ** days)
             ) - principal
-
-
-def get_monthly_payment():
-    inputs = pd.read_csv("input.csv", encoding="utf-8", nrows=1)
-    return inputs.loc[0, "Monthly Payment"]
 
 
 def increment_date(date):
@@ -137,9 +135,7 @@ def update_schedule(totalfunds, date):
 if __name__ == "__main__":
 
     filename = "input.csv"
-    totalfunds = get_monthly_payment()
     date = datetime.date.today()
-    timetable = pd.DataFrame(columns=["Date"])
 
-    debts = read_file(filename)
+    debts, totalfunds = read_file(filename)
     update_schedule(totalfunds, date)
