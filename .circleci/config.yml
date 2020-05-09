@@ -19,4 +19,5 @@ jobs:
           name: test
           command: |
             . venv/bin/activate
-            python -m pytest test/
+            python -m pytest -m "not integtest" test/
+            python -m pytest -m integtest test/

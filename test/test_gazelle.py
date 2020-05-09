@@ -81,6 +81,7 @@ def test_pay_excess():
     assert gazelle.pay_excess(principal=10, minimum=2, remainder=12) == (0, 12, 2)
 
 
+@pytest.mark.integtest
 def test_update_schedule():
     date = datetime.date(2020, 5, 8)
     gazelle.update_schedule(date)
