@@ -14,9 +14,9 @@ jobs:
           command: |
             python -m venv venv
             . venv/bin/activate
-            pip install -r requirements.txt
+            pip install -r test/requirements_test.txt
       - run:
           name: test
           command: |
             . venv/bin/activate
-            python -m pytest test_gazelle.py
+            python -m pytest test/
