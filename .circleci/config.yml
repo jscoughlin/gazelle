@@ -22,4 +22,4 @@ jobs:
           name: run tests
           command: |
             . venv/bin/activate
-            pytest -m test.gazelle.py
+            pytest -m test_gazelle.py
