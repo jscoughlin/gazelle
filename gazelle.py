@@ -25,9 +25,9 @@ def read_file(filename):
 def compound_daily(date, principal, rate):
     """Calculate the principal and interest using daily compounding."""
 
-    daysinyear = 366 if (pd.Period("{}".format(date)).is_leap_year) else 365
+    daysinyear = 366 if (pd.Period(f"{date}").is_leap_year) else 365
     dailyrate = (rate / 100) / daysinyear
-    days = pd.Period("{}".format(date)).days_in_month
+    days = pd.Period(f"{date}").days_in_month
 
     new_principal = principal * (1 + dailyrate) ** days
     interest = new_principal - principal
