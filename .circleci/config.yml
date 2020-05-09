@@ -1,21 +1,25 @@
 version: 2.1
-
-orbs:
-  python: circleci/python@0.2.1
-
 jobs:
-  build-and-test:
-    executor: python/default
+  build:
+    docker:
+      - image: circleci/python:3.7.7
+
+    working_directory: ~/repo
+
+
     steps:
+      # Step 1: obtain repo from GitHub
       - checkout
-      - run
-        name: install dependencies
-            command: |
-              python3 -m venv venv
-              . venv/bin/activate
-              pip install -r requirements.txt
-        - run:
-            name: run tests
-            command: |
-              . venv/bin/activate
-              - python -m pytest test_gazelle.py
+      # Step 2: create virtual env and install dependencies
+      - run:
+          name: install dependencies
+          command: |
+            python3 -m venv venv
+            . venv/bin/activate
+            pip install -r requirements.txt
+      # Step 3: run linter and tests
+      - run:
+          name: run tests
+          command: |
+            . venv/bin/activate
+            pytest -m test.gazelle.py
