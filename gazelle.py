@@ -56,15 +56,13 @@ def pay_excess(principal, minimum, remainder):
     return principal - excess, minimum + excess, remainder
 
 
-def main():
+def update_schedule(date):
 
     filename = "input.csv"
     debts, totalfunds = read_file(filename)
 
     payments = debts[["Adjusted Payment"]].transpose()
     interest = debts[["Interest"]].transpose()
-
-    date = datetime.date.today()
 
     while debts["Principal"].sum() > 0:
         if debts["Minimum Payment"].sum() > totalfunds:
@@ -131,4 +129,4 @@ def main():
 
 
 if __name__ == "__main__":
-    main()
+    update_schedule(datetime.date.today())
