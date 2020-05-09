@@ -4,7 +4,7 @@ import os
 import pandas as pd
 import pytest
 
-import gazelle
+from gazelle import gazelle
 
 d = {
     "Date": [
