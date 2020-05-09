@@ -1,4 +1,5 @@
 import datetime
+from pathlib import Path
 
 import pandas as pd
 
@@ -57,8 +58,8 @@ def pay_excess(principal, minimum, remainder):
 
 
 def update_schedule(date):
-    filename = "input.csv"
-    debts, totalfunds = read_file(filename)
+    path = Path(__file__).parent / "input.csv"
+    debts, totalfunds = read_file(path)
 
     payments = debts[["Adjusted Payment"]].transpose()
     interest = debts[["Interest"]].transpose()
