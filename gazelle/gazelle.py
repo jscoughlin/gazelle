@@ -13,6 +13,10 @@ def read_file(filename):
     debts["Interest"] = 0
 
     inputs = pd.read_csv(filename, encoding="utf-8", nrows=1)
+    inputs[inputs.columns[:1]] = (
+        inputs[inputs.columns[:1]].replace("[^.0-9]", "", regex=True).astype(float)
+    )
+
     totalfunds = inputs.loc[0, "Monthly Payment"]
     strategy = inputs.loc[0, "Strategy (Avalanche or Snowball)"].lower()
 
