@@ -1,5 +1,6 @@
 import datetime
 import os
+from pathlib import Path
 
 import pandas as pd
 import pytest
@@ -85,6 +86,7 @@ def test_pay_excess():
 def test_update_schedule():
     date = datetime.date(2020, 5, 8)
     gazelle.update_schedule(date)
-    output = pd.read_csv("payment_schedule.csv", encoding="utf-8")
+    path = Path.cwd() / "gazelle" / "payment_schedule.csv"
+    output = pd.read_csv(path, encoding="utf-8")
     assert expected.equals(output) == True
-    os.remove("payment_schedule.csv")
+    path.unlink()

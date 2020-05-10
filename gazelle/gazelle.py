@@ -116,7 +116,8 @@ def update_schedule(date):
     # The initial payment row is set to zero.
     # Shift up one and drop the last row before writing to csv.
     payments = payments.shift(-1).drop(payments.tail(1).index)
-    payments.to_csv("payment_schedule.csv", index=True, header=True, encoding="utf-8")
+    path = Path(__file__).parent / "payment_schedule.csv"
+    payments.to_csv(path, index=True, header=True, encoding="utf-8")
 
     print()
     print(f"Debt Free: {payments.index[-1].strftime('%B %Y')}")
