@@ -1,9 +1,9 @@
-Monthly Payment,Strategy (Avalanche or Snowball),,
+﻿Monthly Payment,Strategy (Avalanche or Snowball),Balance Date (yyyymm),
 4000,Avalanche,,
 ,,,
 ,,,
 Name,Principal,Rate,Minimum Payment
-Example Student Loan 1,6844.71,7.49,84.94
-Example Student Loan 2,2228.32,7,46.44
-Example Student Loan 3,3485.23,6.814,779.59
-Example Car Loan,12762.9,7.65,158.6
+Example Student Loan 1,"AA$ 6,84,,4.71",7.49,84.94
+Example Student Loan 2,2228.3 2,7,46.44
+Example Student Loan 3,34    85.23,6.814,779.59
+Example Car Loan,"12,762.90",7.65,158.6
