@@ -21,8 +21,9 @@ jobs:
 install: 
   - pip3 install --upgrade pip  # all three OSes agree about 'pip3'
   - pip3 install -r test/requirements_test.txt
+  - pip3 install e .
 # 'python' points to Python 2.7 on macOS but points to Python 3.8 on Linux and Windows
 # 'python3' is a 'command not found' error on Windows but 'py' works on Windows only
 script:
-  - python3 -m pytest -m "not integtest" test/ || python -m pytest -m "not integtest" test
-  - python3 -m pytest -m integtest test/ || python -m pytest -m integtest test/
+  - pytest -m "not integtest" test/ || pytest -m "not integtest" test
+  - pytest -m integtest test/ || pytest -m integtest test/
