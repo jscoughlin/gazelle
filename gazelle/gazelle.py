@@ -66,6 +66,7 @@ def update_schedule(date):
     path = Path(__file__).parent / "input.csv"
     debts, totalfunds = read_file(path)
 
+    initial_date = date
     payments = debts[["Adjusted Payment"]].transpose()
     interest = debts[["Interest"]].transpose()
 
@@ -115,14 +116,16 @@ def update_schedule(date):
         date = date + pd.DateOffset(months=1)
 
     payments.index = pd.date_range(
-        start=(datetime.date.today()), periods=len(payments), freq="M", name="Date"
+        start=initial_date, periods=len(payments), freq="M", name="Date"
     )
 
     # The initial payment row is set to zero.
     # Shift up one and drop the last row before writing to csv.
     payments = payments.shift(-1).drop(payments.tail(1).index)
     path = Path(__file__).parent / "payment_schedule.csv"
-    payments.to_csv(path, index=True, header=True, encoding="utf-8")
+    payments.to_csv(
+        path, index=True, header=True, encoding="utf-8", float_format="%.2f"
+    )
 
     print()
     print(f"Debt Free: {payments.index[-1].strftime('%B %Y')}")
