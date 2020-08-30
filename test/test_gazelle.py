@@ -51,8 +51,7 @@ def test_pay_excess():
 
 @pytest.mark.integtest
 def test_update_schedule():
-    date = datetime.date(2020, 5, 8)
-    gazelle.update_schedule(date)
+    gazelle.update_schedule()
     path = Path.cwd() / "gazelle" / "payment_schedule.csv"
     output = pd.read_csv(path, encoding="utf-8")
     assert expected.equals(output) == True

@@ -18,6 +18,16 @@ def read_file(filename):
     )
 
     totalfunds = inputs.loc[0, "Monthly Payment"]
+    try:
+        date = datetime.datetime.strptime(
+            str(inputs.loc[0, "Start Date (YYYY-MM)"]), "%Y-%m"
+        )
+    except ValueError:
+        date = datetime.date.today()
+        print(
+            "Invalid date format entered for Start Date. Must be YYYY-MM format. Using today's date instead."
+        )
+
     strategy = inputs.loc[0, "Strategy (Avalanche or Snowball)"].lower()
 
     if strategy == "snowball":
@@ -25,7 +35,7 @@ def read_file(filename):
     else:
         debts = debts.sort_values("Rate", ascending=False)
 
-    return debts, totalfunds
+    return debts, totalfunds, date
 
 
 def compound_daily(date, principal, rate):
@@ -62,9 +72,9 @@ def pay_excess(principal, minimum, remainder):
     return principal - excess, minimum + excess, remainder
 
 
-def update_schedule(date):
+def update_schedule():
     path = Path(__file__).parent / "input.csv"
-    debts, totalfunds = read_file(path)
+    debts, totalfunds, date = read_file(path)
 
     initial_date = date
     payments = debts[["Adjusted Payment"]].transpose()
@@ -138,4 +148,4 @@ def update_schedule(date):
 
 
 if __name__ == "__main__":
-    update_schedule(datetime.date.today())
+    update_schedule()
