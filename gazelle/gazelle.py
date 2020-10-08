@@ -8,19 +8,19 @@ def read_file(filename):
     """Load in the different debts from a csv."""
 
     debts = pd.read_csv(filename, encoding="utf-8", skiprows=4, index_col="Name")
-    debts = debts.replace("[^.0-9]", "", regex=True).astype(float)
+    debts = debts.replace(r"[^.0-9]", "", regex=True).astype(float)
     debts["Adjusted Payment"] = 0
     debts["Interest"] = 0
 
-    inputs = pd.read_csv(filename, encoding="utf-8", nrows=1)
+    inputs = pd.read_csv(filename, encoding="utf-8", nrows=1, skipinitialspace=True)
     inputs[inputs.columns[:1]] = (
-        inputs[inputs.columns[:1]].replace("[^.0-9]", "", regex=True).astype(float)
+        inputs[inputs.columns[:1]].replace(r"[^.0-9]", "", regex=True).astype(float)
     )
 
     totalfunds = inputs.loc[0, "Monthly Payment"]
     try:
         date = datetime.datetime.strptime(
-            str(inputs.loc[0, "Start Date (YYYY-MM)"]), "%Y-%m"
+            str(inputs.loc[0, "Start Date (YYYY-MM)"]).strip(), "%Y-%m"
         )
     except ValueError:
         date = datetime.date.today()
@@ -28,7 +28,7 @@ def read_file(filename):
             "Invalid date format entered for Start Date. Must be YYYY-MM format. Using today's date instead."
         )
 
-    strategy = inputs.loc[0, "Strategy (Avalanche or Snowball)"].lower()
+    strategy = inputs.loc[0, "Strategy (Avalanche or Snowball)"].strip().lower()
 
     if strategy == "snowball":
         debts = debts.sort_values("Principal", ascending=True)
