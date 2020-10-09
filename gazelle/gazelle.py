@@ -13,8 +13,8 @@ def read_file(filename):
     debts["Interest"] = 0
 
     inputs = pd.read_csv(filename, encoding="utf-8", nrows=1, skipinitialspace=True)
-    inputs[inputs.columns[:1]] = (
-        inputs[inputs.columns[:1]].replace(r"[^.0-9]", "", regex=True).astype(float)
+    inputs["Monthly Payment"] = (
+        inputs["Monthly Payment"].replace(r"[^.0-9]", "", regex=True).astype(float)
     )
 
     totalfunds = inputs.loc[0, "Monthly Payment"]
@@ -73,7 +73,7 @@ def pay_excess(principal, minimum, remainder):
 
 
 def update_schedule():
-    path = Path(__file__).parent / "input.csv"
+    path = Path(__file__).resolve().parent / "input.csv"
     debts, totalfunds, date = read_file(path)
 
     initial_date = date
@@ -132,7 +132,7 @@ def update_schedule():
     # The initial payment row is set to zero.
     # Shift up one and drop the last row before writing to csv.
     payments = payments.shift(-1).drop(payments.tail(1).index)
-    path = Path(__file__).parent / "payment_schedule.csv"
+    path = Path(__file__).resolve().parent / "payment_schedule.csv"
     payments.to_csv(
         path, index=True, header=True, encoding="utf-8", float_format="%.2f"
     )
