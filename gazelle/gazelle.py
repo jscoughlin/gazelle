@@ -5,7 +5,7 @@ import pandas as pd
 
 
 def read_file(filename):
-    """Load in the different debts from a csv."""
+    """Load in the different debts from input.csv"""
 
     debts = pd.read_csv(filename, encoding="utf-8", skiprows=4, index_col="Name")
     debts = debts.replace(r"[^.0-9]", "", regex=True).astype(float)
@@ -108,16 +108,14 @@ def update_schedule():
             remainder = totalfunds - debts["Minimum Payment"].sum()
 
             # Make excess payments and update the adjusted payment amount
-            for debt in debts.index:
-                if debts.loc[debt, "Principal"] > 0:
+            for _, debt in debts.iterrows():
+                if debt["Principal"] > 0:
                     (
-                        debts.loc[debt, "Principal"],
-                        debts.loc[debt, "Adjusted Payment"],
+                        debt["Principal"],
+                        debt["Adjusted Payment"],
                         remainder,
                     ) = pay_excess(
-                        debts.loc[debt, "Principal"],
-                        debts.loc[debt, "Minimum Payment"],
-                        remainder,
+                        debt["Principal"], debt["Minimum Payment"], remainder,
                     )
 
             payments = payments.append(debts[["Adjusted Payment"]].transpose())
