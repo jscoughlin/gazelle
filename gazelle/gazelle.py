@@ -7,7 +7,7 @@ import pandas as pd
 def read_file(filename):
     """Load in the different debts from input.csv"""
 
-    debts = pd.read_csv(filename, encoding="utf-8", skiprows=4, index_col="Name")
+    debts = pd.read_csv(filename, encoding="utf-8", skiprows=3, index_col="Name")
     debts = debts.replace(r"[^.0-9]", "", regex=True).astype(float)
     debts["Adjusted Payment"] = 0
     debts["Interest"] = 0
